@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-headline: 'EB Garamond', Georgia, serif;
+    --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+    background: #0b0c10;
+}
+
+body {
+    overscroll-behavior: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+.share-bar__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 0.5rem;
+    background: #1b1d24;
+    padding: 0.45rem 0.7rem;
+    color: #c3c6d0;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: background 160ms ease, color 160ms ease;
+}
+
+.share-bar__toggle:hover {
+    background: #232530;
+    color: #fff;
+}
+
+.share-bar__toggle > .material-symbols-outlined:first-child {
+    color: #f58220;
+}
+
+.share-bar[data-status='expanded'] .share-bar__chevron {
+    transform: rotate(180deg);
+}
+
+.share-bar__chevron {
+    transition: transform 160ms ease;
+}
+
+.share-bar__menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.65rem;
+}
+
+.share-bar[data-status='collapsed'] .share-bar__menu {
+    display: none;
+}
+
+.share-bar__menu button {
+    display: flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #282a33;
+    border-radius: 9999px;
+    background: #1b1d24;
+    color: #a6aab6;
+    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.share-bar__menu button:hover {
+    border-color: #55402e;
+    background: #25232a;
+    color: #fff;
+}
+
+.share-bar__menu [data-subtype='linkedin'] {
+    color: #0a66c2;
+}
+
+.share-bar__menu [data-subtype='facebook'] {
+    color: #1877f2;
+}
+
+.share-bar__menu [data-subtype='whatsapp'] {
+    color: #25d366;
+}
+
+.share-bar__menu [data-subtype='instagram'] {
+    color: #e879a9;
+}
+
+.share-bar__menu [data-subtype='tiktok'] {
+    color: #f8fafc;
+}
+
+.share-bar__network-icon {
+    font-family: Arial, sans-serif;
+}
+
+.share-bar__brand-icon {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+}
+
+.share-bar__toast {
+    display: block;
+    min-height: 1rem;
+    margin-top: 0.5rem;
+    color: #f6b26b;
+    font-size: 0.68rem;
+    opacity: 0;
+    transition: opacity 160ms ease;
+}
+
+.share-bar__toast.is-visible {
+    opacity: 1;
+}
