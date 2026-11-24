@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\VoiceCall;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
+use Twilio\Jwt\AccessToken;
+use Twilio\Jwt\Grants\VoiceGrant;
+use Twilio\Security\RequestValidator;
 
 class TwilioCallController extends Controller
 {
@@ -24,61 +28,167 @@ class TwilioCallController extends Controller
         return response()->json(['data' => $calls]);
     }
 
+    public function token(Request $request): JsonResponse
+    {
+        $config = config('services.twilio');
+
+        if (! $config['account_sid'] || ! $config['api_key'] || ! $config['api_secret'] || ! $config['twiml_app_sid'] || ! $config['from']) {
+            return response()->json(['message' => 'Configura las credenciales de Voice y el SID de la TwiML App.'], 503);
+        }
+
+        $token = new AccessToken(
+            $config['account_sid'],
+            $config['api_key'],
+            $config['api_secret'],
+            3600,
+            'adviser_'.$request->attributes->get('adviser')->id,
+        );
+        $token->addGrant((new VoiceGrant)->setOutgoingApplicationSid($config['twiml_app_sid'])->setIncomingAllow(false));
+
+        return response()->json(['token' => $token->toJWT()])->header('Cache-Control', 'no-store');
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'client_phone' => ['required', 'string', 'regex:/^\+[1-9]\d{7,14}$/'],
-            'adviser_phone' => ['required', 'string', 'regex:/^\+[1-9]\d{7,14}$/'],
             'recording_consent' => ['accepted'],
         ]);
         $config = config('services.twilio');
 
-        if (! $config['account_sid'] || ! $config['auth_token'] || ! $config['from']) {
-            return response()->json(['message' => 'Twilio aún no está configurado en el servidor.'], 503);
+        if (! $config['account_sid'] || ! $config['auth_token'] || ! $config['api_key'] || ! $config['api_secret'] || ! $config['twiml_app_sid'] || ! $config['from']) {
+            return response()->json(['message' => 'Configura las credenciales de Voice y el SID de la TwiML App.'], 503);
         }
 
         $adviser = $request->attributes->get('adviser');
         $voiceCall = VoiceCall::create([
             'adviser_id' => $adviser->id,
             'client_phone' => $data['client_phone'],
-            'adviser_phone' => $data['adviser_phone'],
+            'adviser_phone' => null,
             'status' => 'initiating',
         ]);
 
-        try {
-            $voiceUrl = $this->webhookUrl("/api/webhooks/twilio/voice/{$voiceCall->id}");
-            $statusUrl = $this->webhookUrl("/api/webhooks/twilio/call-status/{$voiceCall->id}");
-            $twiml = '<Response><Gather action="'.e($voiceUrl).'" method="POST" numDigits="1" timeout="15">'
-                .'<Say language="es-PE">Esta llamada puede ser grabada y transcrita. Si todas las personas han dado su consentimiento, pulse uno para continuar.</Say>'
-                .'</Gather><Say language="es-PE">No se recibió confirmación. La llamada finalizará.</Say><Hangup/></Response>';
+        return response()->json(['call' => $voiceCall->only(['id', 'status'])], 201);
+    }
 
+    public function cancel(Request $request, VoiceCall $voiceCall): JsonResponse
+    {
+        abort_unless($voiceCall->adviser_id === $request->attributes->get('adviser')->id, 404);
+
+        VoiceCall::query()
+            ->whereKey($voiceCall->id)
+            ->whereIn('status', ['initiating', 'dialing'])
+            ->update(['status' => 'failed']);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function browserVoice(Request $request)
+    {
+        $this->validateTwilioRequest($request);
+        $from = (string) $request->input('From');
+        $callId = $request->input('CallId');
+        $callSid = (string) $request->input('CallSid');
+
+        if (! preg_match('/^client:adviser_(\d+)$/', $from, $matches) || ! ctype_digit((string) $callId) || ! preg_match('/^CA[a-fA-F0-9]{32}$/', $callSid)) {
+            return $this->twiml('<Response><Hangup/></Response>');
+        }
+
+        $voiceCall = DB::transaction(function () use ($callId, $callSid, $matches) {
+            $voiceCall = VoiceCall::query()
+                ->whereKey($callId)
+                ->where('adviser_id', (int) $matches[1])
+                ->where('status', 'initiating')
+                ->lockForUpdate()
+                ->first();
+
+            if ($voiceCall) {
+                $voiceCall->update(['twilio_call_sid' => $callSid, 'status' => 'dialing']);
+            }
+
+            return $voiceCall;
+        });
+
+        if (! $voiceCall) {
+            return $this->twiml('<Response><Hangup/></Response>');
+        }
+
+        $dialStatusUrl = e($this->webhookUrl("/api/webhooks/twilio/dial-status/{$voiceCall->id}"));
+        $screenUrl = e($this->webhookUrl("/api/webhooks/twilio/customer-screen/{$voiceCall->id}"));
+        $clientPhone = e($voiceCall->client_phone);
+        $callerId = e(config('services.twilio.from'));
+
+        return $this->twiml('<Response><Dial callerId="'.$callerId.'" answerOnBridge="true" action="'.$dialStatusUrl.'" method="POST"><Number url="'.$screenUrl.'" method="POST">'.$clientPhone.'</Number></Dial></Response>');
+    }
+
+    public function screenCustomer(Request $request, VoiceCall $voiceCall)
+    {
+        $this->validateTwilioRequest($request);
+        $consentUrl = e($this->webhookUrl("/api/webhooks/twilio/customer-consent/{$voiceCall->id}"));
+
+        return $this->twiml('<Response><Gather action="'.$consentUrl.'" method="POST" numDigits="1" timeout="15">'
+            .'<Say language="es-PE">Esta llamada puede ser grabada y transcrita. Si acepta, pulse uno para continuar.</Say>'
+            .'</Gather><Hangup/></Response>');
+    }
+
+    public function customerConsent(Request $request, VoiceCall $voiceCall)
+    {
+        $this->validateTwilioRequest($request);
+
+        if ($request->input('Digits') !== '1') {
+            $voiceCall->update(['status' => 'consent_declined']);
+
+            return $this->twiml('<Response><Hangup/></Response>');
+        }
+
+        if (! $voiceCall->twilio_call_sid || VoiceCall::query()->whereKey($voiceCall->id)->where('status', 'dialing')->update(['status' => 'recording-starting']) !== 1) {
+            return $this->twiml('<Response><Hangup/></Response>');
+        }
+
+        try {
+            $config = config('services.twilio');
+            $recordingUrl = $this->webhookUrl("/api/webhooks/twilio/recording/{$voiceCall->id}");
             $response = Http::asForm()->withBasicAuth($config['account_sid'], $config['auth_token'])
-                ->timeout(25)
-                ->post("https://api.twilio.com/2010-04-01/Accounts/{$config['account_sid']}/Calls.json", [
-                    'To' => $data['client_phone'],
-                    'From' => $config['from'],
-                    'Twiml' => $twiml,
-                    'StatusCallback' => $statusUrl,
-                    'StatusCallbackMethod' => 'POST',
-                    'StatusCallbackEvent' => 'completed',
+                ->timeout(15)
+                ->post("https://api.twilio.com/2010-04-01/Accounts/{$config['account_sid']}/Calls/{$voiceCall->twilio_call_sid}/Recordings.json", [
+                    'RecordingChannels' => 'dual',
+                    'RecordingStatusCallback' => $recordingUrl,
+                    'RecordingStatusCallbackMethod' => 'POST',
+                    'RecordingStatusCallbackEvent' => 'completed',
                 ]);
             $response->throw();
+            $voiceCall->update(['status' => 'in-progress', 'recording_sid' => $response->json('sid')]);
 
-            $voiceCall->update([
-                'twilio_call_sid' => $response->json('sid'),
-                'status' => $response->json('status', 'queued'),
-            ]);
-
-            return response()->json([
-                'message' => 'Llamada iniciada. La grabación comenzará después de la confirmación de consentimiento.',
-                'call' => $voiceCall->only(['id', 'status']),
-            ], 202);
+            return $this->twiml('<Response><Say language="es-PE">Conectando con su asesor.</Say></Response>');
         } catch (Throwable $exception) {
             report($exception);
             $voiceCall->update(['status' => 'failed']);
 
-            return response()->json(['message' => 'No se pudo iniciar la llamada con Twilio.'], 502);
+            return $this->twiml('<Response><Say language="es-PE">No se pudo iniciar la llamada.</Say><Hangup/></Response>');
         }
+    }
+
+    public function dialStatus(Request $request, VoiceCall $voiceCall)
+    {
+        $this->validateTwilioRequest($request);
+
+        if (! in_array($voiceCall->status, ['recorded', 'failed', 'consent_declined'], true)) {
+            $voiceCall->update(['status' => Str::lower((string) $request->input('DialCallStatus', 'completed'))]);
+        }
+
+        return $this->twiml('<Response><Hangup/></Response>');
+    }
+
+    public function browserStatus(Request $request): JsonResponse
+    {
+        $this->validateTwilioRequest($request);
+        $voiceCall = VoiceCall::query()->where('twilio_call_sid', $request->input('CallSid'))->first();
+
+        if ($voiceCall && ! in_array($voiceCall->status, ['recorded', 'failed', 'consent_declined'], true)) {
+            $voiceCall->update(['status' => Str::lower((string) $request->input('CallStatus', 'completed'))]);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function consent(Request $request, VoiceCall $voiceCall)
@@ -192,18 +302,11 @@ class TwilioCallController extends Controller
         }
 
         $url = $this->webhookUrl($request->getRequestUri());
+        $validator = new RequestValidator($authToken);
+        $algorithm = RequestValidator::getSignatureAlgorithm($request->header(RequestValidator::SIGNATURE_SETTINGS_HEADER));
 
         if ($request->isJson()) {
-            $bodyHash = $request->query('bodySHA256');
-            $rawBody = $request->getContent();
-
-            if (! is_string($bodyHash) || ! hash_equals($bodyHash, hash('sha256', $rawBody))) {
-                throw new HttpException(403, 'Invalid Twilio signature.');
-            }
-
-            $expected = base64_encode(hash_hmac('sha1', $url, $authToken, true));
-
-            if (! hash_equals($expected, $signature)) {
+            if (! $validator->validate($signature, $url, $request->getContent(), $algorithm)) {
                 throw new HttpException(403, 'Invalid Twilio signature.');
             }
 
@@ -215,19 +318,7 @@ class TwilioCallController extends Controller
             return;
         }
 
-        $parameters = $request->post();
-        ksort($parameters, SORT_STRING);
-        $signaturePayload = $url;
-
-        foreach ($parameters as $key => $value) {
-            if (is_scalar($value)) {
-                $signaturePayload .= $key.(string) $value;
-            }
-        }
-
-        $expected = base64_encode(hash_hmac('sha1', $signaturePayload, $authToken, true));
-
-        if (! hash_equals($expected, $signature)) {
+        if (! $validator->validate($signature, $url, $request->post(), $algorithm)) {
             throw new HttpException(403, 'Invalid Twilio signature.');
         }
 

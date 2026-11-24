@@ -18,21 +18,11 @@ function showToast(container, message) {
     toast._timer = window.setTimeout(() => toast.classList.remove('is-visible'), 3200);
 }
 
-async function copyLink(container, url, message) {
-    try {
-        await navigator.clipboard.writeText(url);
-        showToast(container, message);
-    } catch {
-        showToast(container, 'No se pudo copiar. Inténtalo desde una página HTTPS.');
-    }
-}
-
-async function handleShare(button, container) {
+function handleShare(button, container) {
     const subtype = button.dataset.subtype;
     const title = button.dataset.title || document.title;
-    const url = urlWithUtm(button.dataset.url, subtype === 'copylink' ? 'copylink' : subtype);
+    const url = urlWithUtm(button.dataset.url, subtype);
     const encodedUrl = encodeURIComponent(url);
-    const encodedTitle = encodeURIComponent(title);
     let shareUrl;
 
     switch (subtype) {
@@ -42,37 +32,6 @@ async function handleShare(button, container) {
         case 'whatsapp':
             shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${title} ${url}`)}`;
             break;
-        case 'linkedin':
-            shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-            break;
-        case 'twitter':
-            shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-            break;
-        case 'telegram':
-            shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
-            break;
-        case 'mail':
-            window.location.href = `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
-            showToast(container, 'Abriendo tu aplicación de correo.');
-            return;
-        case 'instagram':
-        case 'tiktok':
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title, url });
-                    showToast(container, `Enlace listo para compartir en ${subtype === 'instagram' ? 'Instagram' : 'TikTok'}.`);
-                } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        showToast(container, 'No se pudo abrir el menú para compartir.');
-                    }
-                }
-                return;
-            }
-            await copyLink(container, url, `Enlace copiado. Pégalo al compartir tu publicación en ${subtype === 'instagram' ? 'Instagram' : 'TikTok'}.`);
-            return;
-        case 'copylink':
-            await copyLink(container, url, '¡Enlace copiado!');
-            return;
         default:
             return;
     }

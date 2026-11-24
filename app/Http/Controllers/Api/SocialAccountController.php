@@ -96,7 +96,7 @@ class SocialAccountController extends Controller
 
             $tokenResponse->throw();
             $tokenData = $tokenResponse->json();
-            $tokenData = $provider === 'tiktok' ? ($tokenData['data'] ?? []) : $tokenData;
+            $tokenData = $provider === 'tiktok' ? ($tokenData['data'] ?? $tokenData) : $tokenData;
             $accessToken = $tokenData['access_token'] ?? null;
 
             if (! $accessToken) {
@@ -128,7 +128,7 @@ class SocialAccountController extends Controller
                     'refresh_token' => $tokenData['refresh_token'] ?? null,
                     'token_expires_at' => isset($tokenData['expires_in']) ? now()->addSeconds((int) $tokenData['expires_in']) : null,
                     'refresh_token_expires_at' => isset($tokenData['refresh_expires_in']) ? now()->addSeconds((int) $tokenData['refresh_expires_in']) : null,
-                    'scopes' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : [],
+                    'scopes' => isset($tokenData['scope']) ? preg_split('/[\s,]+/', trim($tokenData['scope'])) : [],
                 ],
             );
 

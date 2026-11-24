@@ -21,6 +21,45 @@ body {
     overscroll-behavior: none;
 }
 
+.page-enter {
+    animation: page-enter 280ms ease-out both;
+}
+
+@keyframes page-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-enter {
+        animation: none;
+    }
+}
+
+.customer-call-action {
+    transition: opacity 160ms ease, transform 160ms ease, background-color 160ms ease;
+}
+
+@media (hover: hover) {
+    .customer-call-action {
+        opacity: 0;
+        transform: translateX(6px);
+    }
+
+    .customer-card:hover .customer-call-action,
+    .customer-card:focus-within .customer-call-action {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 ::-webkit-scrollbar {
     display: none;
 }
@@ -85,7 +124,7 @@ body {
     color: #fff;
 }
 
-.share-bar__menu [data-subtype='linkedin'] {
+.share-bar__menu button[title*='LinkedIn'] {
     color: #0a66c2;
 }
 
@@ -97,11 +136,7 @@ body {
     color: #25d366;
 }
 
-.share-bar__menu [data-subtype='instagram'] {
-    color: #e879a9;
-}
-
-.share-bar__menu [data-subtype='tiktok'] {
+.share-bar__menu button[title*='TikTok'] {
     color: #f8fafc;
 }
 

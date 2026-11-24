@@ -1,25 +1,23 @@
-<!DOCTYPE html>
-<html class="dark" lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0c0d10">
-    <title>Integraciones · FIREFLYONE</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+@extends('app')
+
+@section('title', 'Integraciones · FIREFLYONE')
+@section('theme-color', '#0c0d10')
+@section('body-class', 'bg-[#0c0d10] font-sans text-[#dedfe4] antialiased')
+
+@section('head')
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen bg-[#0c0d10] font-sans text-[#dedfe4] antialiased">
-<main id="integrations-app" class="mx-auto min-h-screen w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+@endsection
+
+@section('content')
+<div id="integrations-app" class="min-h-[calc(100vh-2.5rem)] pt-14 md:pl-60 md:pt-0">
+    <x-feed-nav active="integrations" />
+<main class="page-enter mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
     <header class="mb-8 flex items-center justify-between border-b border-[#20222a] pb-5">
         <div>
-            <a href="/feed" class="text-xs text-[#969aa7] transition hover:text-white">← Volver al feed</a>
-            <h1 class="mt-3 text-2xl font-semibold text-[#f0f2f5]">Conexiones e integraciones</h1>
+            <h1 class="text-2xl font-semibold text-[#f0f2f5]">Conexiones e integraciones</h1>
             <p class="mt-1 text-sm text-[#7a7e8b]">Conecta tus cuentas para preparar la publicación de contenidos.</p>
         </div>
-        <a href="/feed" class="hidden items-center gap-2 font-semibold text-white sm:flex"><span class="font-mono text-sm text-[#f58220]">&lt;//&gt;</span> FIREFLYONE</a>
     </header>
 
     <div v-if="notice" class="mb-5 rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-300" role="status">@{{ notice }}</div>
@@ -69,19 +67,16 @@
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1e2026] text-[#f58220]"><span class="material-symbols-outlined">call</span></div>
                 <div>
                     <h2 id="twilio-title" class="text-sm font-semibold text-[#f0f2f5]">Twilio Voice</h2>
-                    <p class="mt-0.5 text-[11px] text-[#777c89]">Llamadas y transcripción</p>
+                    <p class="mt-0.5 text-[11px] text-[#777c89]">Llamadas desde el navegador y transcripción</p>
                 </div>
-                <span class="ml-auto rounded-full border border-amber-900/70 bg-amber-950/30 px-2 py-1 text-[10px] font-medium text-amber-300">Pendiente de configuración</span>
             </div>
-            <p class="mt-4 text-xs leading-relaxed text-[#8d919d]">La integración requiere credenciales de Twilio, un número emisor y una URL pública HTTPS para recibir callbacks de llamadas y grabaciones. Las grabaciones deben anunciarse y contar con el consentimiento necesario.</p>
+            <p class="mt-4 text-xs leading-relaxed text-[#8d919d]">El asesor usa el micrófono de esta computadora. Twilio marca al cliente desde el número configurado. Se requiere una TwiML App y una URL pública HTTPS para los callbacks.</p>
 
             <div v-if="callNotice" class="mt-4 rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-300" role="status">@{{ callNotice }}</div>
             <div v-if="callError" class="mt-4 rounded-lg border border-red-900/70 bg-red-950/40 px-3 py-2 text-xs text-red-300" role="alert">@{{ callError }}</div>
+            <p v-if="callStatus" class="mt-4 text-xs text-[#c3c6d0]" role="status">@{{ callStatus }}</p>
 
             <form @submit.prevent="startCall" class="mt-5 grid gap-4 md:grid-cols-2">
-                <label class="block text-xs font-medium text-[#c3c6d0]">Tu teléfono (E.164)
-                    <input v-model.trim="callForm.adviser_phone" class="mt-1.5 w-full rounded-lg border border-[#30323c] bg-[#0f1013] px-3 py-2.5 text-sm text-white placeholder:text-[#626775] focus:border-[#f58220] focus:outline-none focus:ring-1 focus:ring-[#f58220]" placeholder="+51987654321" pattern="\+[1-9][0-9]{7,14}" required type="tel" autocomplete="tel">
-                </label>
                 <label class="block text-xs font-medium text-[#c3c6d0]">Teléfono del cliente (E.164)
                     <input v-model.trim="callForm.client_phone" class="mt-1.5 w-full rounded-lg border border-[#30323c] bg-[#0f1013] px-3 py-2.5 text-sm text-white placeholder:text-[#626775] focus:border-[#f58220] focus:outline-none focus:ring-1 focus:ring-[#f58220]" placeholder="+51912345678" pattern="\+[1-9][0-9]{7,14}" required type="tel" autocomplete="tel">
                 </label>
@@ -89,7 +84,10 @@
                     <input v-model="callForm.recording_consent" class="mt-0.5 h-4 w-4 rounded border-[#41434c] bg-[#0f1013] accent-[#f58220]" required type="checkbox">
                     Confirmo que todas las personas han sido informadas y han dado su consentimiento para grabar y transcribir la llamada. Twilio también pedirá al cliente que pulse 1 para continuar.
                 </label>
-                <button :disabled="startingCall" class="w-fit rounded-lg bg-[#f58220] px-4 py-2.5 text-xs font-semibold text-black transition hover:bg-[#e07116] disabled:cursor-wait disabled:opacity-60 md:col-span-2" type="submit">@{{ startingCall ? 'Llamando…' : 'Iniciar llamada grabada' }}</button>
+                <div class="flex flex-wrap gap-2 md:col-span-2">
+                    <button :disabled="startingCall || !!activeCall" class="rounded-lg bg-[#f58220] px-4 py-2.5 text-xs font-semibold text-black transition hover:bg-[#e07116] disabled:cursor-wait disabled:opacity-60" type="submit">@{{ startingCall ? 'Conectando…' : 'Llamar desde la computadora' }}</button>
+                    <button v-if="activeCall" @click="hangupCall" class="rounded-lg border border-red-800 px-4 py-2.5 text-xs font-semibold text-red-300 hover:bg-red-950/40" type="button">Colgar</button>
+                </div>
             </form>
 
             <div v-if="calls.length" class="mt-6 border-t border-[#25272e] pt-4">
@@ -112,5 +110,5 @@
         Los tokens de las redes se guardan cifrados en el servidor y se asocian a tu cuenta de asesor.
     </footer>
 </main>
-</body>
-</html>
+</div>
+@endsection

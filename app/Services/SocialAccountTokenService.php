@@ -42,7 +42,7 @@ class SocialAccountTokenService
             'refresh_token_expires_at' => isset($tokens['refresh_expires_in'])
                 ? now()->addSeconds((int) $tokens['refresh_expires_in'])
                 : $account->refresh_token_expires_at,
-            'scopes' => isset($tokens['scope']) ? explode(',', $tokens['scope']) : $account->scopes,
+            'scopes' => isset($tokens['scope']) ? preg_split('/[\s,]+/', trim($tokens['scope'])) : $account->scopes,
         ])->save();
 
         return $account->access_token;
