@@ -64,11 +64,13 @@ return [
     ],
 
     'whatsapp' => [
-        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
-        'app_secret' => env('WHATSAPP_APP_SECRET'),
-        'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+        'api_key' => env('WHATSAPP_360DIALOG_API_KEY'),
+        'webhook_token' => env('WHATSAPP_WEBHOOK_TOKEN'),
+        'recipient' => env('WHATSAPP_360DIALOG_RECIPIENT'),
+        'recipient_type' => env('WHATSAPP_360DIALOG_RECIPIENT_TYPE', 'phone'),
+        'display_phone' => env('WHATSAPP_DISPLAY_PHONE'),
         'phone_number_ids' => env('WHATSAPP_PHONE_NUMBER_IDS', ''),
-        'api_version' => env('WHATSAPP_API_VERSION', 'v27.0'),
+        'api_url' => env('WHATSAPP_360DIALOG_API_URL', 'https://waba-sandbox.360dialog.io/v1'),
     ],
 
 ];

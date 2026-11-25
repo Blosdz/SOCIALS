@@ -9,44 +9,29 @@ use App\Models\WhatsappNumber;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class WhatsappWebhookController extends Controller
 {
-    public function verify(Request $request): Response
-    {
-        $verifyToken = config('services.whatsapp.verify_token');
-
-        if (! $verifyToken || $request->query('hub_mode') !== 'subscribe'
-            || ! hash_equals($verifyToken, (string) $request->query('hub_verify_token'))) {
-            return response('No autorizado.', 403);
-        }
-
-        return response((string) $request->query('hub_challenge'), 200)
-            ->header('Content-Type', 'text/plain');
-    }
-
     public function receive(Request $request): JsonResponse
     {
-        $secret = config('services.whatsapp.app_secret');
+        $secret = config('services.whatsapp.webhook_token');
 
         if (! $secret) {
             return response()->json(['message' => 'Webhook no configurado.'], 503);
         }
 
-        $expectedSignature = 'sha256='.hash_hmac('sha256', $request->getContent(), $secret);
-
-        if (! hash_equals($expectedSignature, (string) $request->header('X-Hub-Signature-256'))) {
-            return response()->json(['message' => 'Firma inválida.'], 403);
+        if (! hash_equals($secret, (string) $request->query('token'))) {
+            return response()->json(['message' => 'Token de webhook inválido.'], 403);
         }
 
         $payload = $request->json()->all();
 
-        if (($payload['object'] ?? null) !== 'whatsapp_business_account') {
-            return response()->json(['message' => 'Evento ignorado.']);
-        }
-
         $allowedNumbers = array_filter(array_map('trim', explode(',', (string) config('services.whatsapp.phone_number_ids'))));
+        $phoneNumberId = (string) ($allowedNumbers[0] ?? '');
+
+        if ($phoneNumberId === '') {
+            return response()->json(['message' => 'Canal de WhatsApp no configurado.'], 503);
+        }
 
         foreach ($payload['entry'] ?? [] as $entry) {
             foreach ($entry['changes'] ?? [] as $change) {
@@ -55,12 +40,6 @@ class WhatsappWebhookController extends Controller
                 }
 
                 $value = $change['value'] ?? [];
-                $phoneNumberId = (string) ($value['metadata']['phone_number_id'] ?? '');
-
-                if (! in_array($phoneNumberId, $allowedNumbers, true)) {
-                    continue;
-                }
-
                 foreach ($value['messages'] ?? [] as $message) {
                     $this->storeIncoming($phoneNumberId, $value, $message);
                 }
@@ -77,9 +56,9 @@ class WhatsappWebhookController extends Controller
     private function storeIncoming(string $phoneNumberId, array $value, array $message): void
     {
         $messageId = (string) ($message['id'] ?? '');
-        $customerPhone = (string) ($message['from'] ?? '');
+        $customerPhone = (string) ($message['from'] ?? $message['from_user_id'] ?? '');
 
-        if ($messageId === '' || ! preg_match('/^[1-9][0-9]{7,14}$/', $customerPhone)) {
+        if ($messageId === '' || $customerPhone === '' || strlen($customerPhone) > 255) {
             return;
         }
 
@@ -89,17 +68,17 @@ class WhatsappWebhookController extends Controller
 
         $number = WhatsappNumber::firstOrCreate(
             ['phone_number_id' => $phoneNumberId],
-            ['display_phone' => $value['metadata']['display_phone_number'] ?? null],
+            ['display_phone' => config('services.whatsapp.display_phone')],
         );
 
-        if ($number->display_phone !== ($value['metadata']['display_phone_number'] ?? null)) {
-            $number->update(['display_phone' => $value['metadata']['display_phone_number'] ?? null]);
+        if ($number->display_phone !== config('services.whatsapp.display_phone')) {
+            $number->update(['display_phone' => config('services.whatsapp.display_phone')]);
         }
 
         $conversation = WhatsappConversation::firstOrCreate(
-            ['phone_number_id' => $phoneNumberId, 'customer_phone' => '+'.$customerPhone],
+            ['phone_number_id' => $phoneNumberId, 'customer_phone' => ctype_digit($customerPhone) ? '+'.$customerPhone : $customerPhone],
             [
-                'business_phone' => $value['metadata']['display_phone_number'] ?? null,
+                'business_phone' => config('services.whatsapp.display_phone'),
                 'assigned_adviser_id' => $number->adviser_id,
             ],
         );
@@ -122,7 +101,7 @@ class WhatsappWebhookController extends Controller
         );
 
         $conversation->forceFill([
-            'business_phone' => $value['metadata']['display_phone_number'] ?? $conversation->business_phone,
+            'business_phone' => config('services.whatsapp.display_phone') ?: $conversation->business_phone,
             'customer_name' => $customerName ?: $conversation->customer_name,
             'assigned_adviser_id' => $number->adviser_id,
             'last_inbound_at' => $conversation->last_inbound_at?->greaterThan($inboundAt)

@@ -49,11 +49,14 @@ class WhatsappConversationController extends Controller
         }
 
         $allowedNumbers = array_filter(array_map('trim', explode(',', (string) config('services.whatsapp.phone_number_ids'))));
-        $accessToken = config('services.whatsapp.access_token');
-        $version = (string) config('services.whatsapp.api_version');
+        $apiKey = config('services.whatsapp.api_key');
+        $apiUrl = rtrim((string) config('services.whatsapp.api_url'), '/');
+        $recipient = config('services.whatsapp.recipient') ?: ltrim($conversation->customer_phone, '+');
+        $recipientType = config('services.whatsapp.recipient_type', 'phone');
 
-        if (! $accessToken || ! in_array($conversation->phone_number_id, $allowedNumbers, true)
-            || ! preg_match('/^v[0-9]+\.[0-9]+$/', $version)) {
+        if (! $apiKey || ! $recipient || ! in_array($recipientType, ['phone', 'bsuid'], true)
+            || ! preg_match('/^https:\/\//', $apiUrl)
+            || ! in_array($conversation->phone_number_id, $allowedNumbers, true)) {
             return response()->json(['message' => 'WhatsApp no está configurado para este número.'], 503);
         }
 
@@ -68,15 +71,23 @@ class WhatsappConversationController extends Controller
         ]);
 
         try {
-            $response = Http::withToken($accessToken)
+            $payload = [
+                'messaging_product' => 'whatsapp',
+                'type' => 'text',
+                'text' => ['body' => $data['body']],
+            ];
+
+            if ($recipientType === 'phone') {
+                $payload['recipient_type'] = 'individual';
+                $payload['to'] = $recipient;
+            } else {
+                $payload['recipient'] = $recipient;
+            }
+
+            $response = Http::withHeaders(['D360-API-KEY' => $apiKey])
                 ->connectTimeout(3)
                 ->timeout(10)
-                ->post("https://graph.facebook.com/{$version}/{$conversation->phone_number_id}/messages", [
-                    'messaging_product' => 'whatsapp',
-                    'to' => ltrim($conversation->customer_phone, '+'),
-                    'type' => 'text',
-                    'text' => ['body' => $data['body']],
-                ]);
+                ->post("{$apiUrl}/messages", $payload);
         } catch (ConnectionException) {
             $message->update(['status' => 'unknown']);
 
@@ -88,7 +99,7 @@ class WhatsappConversationController extends Controller
         if (! $response->successful() || ! is_string($providerId) || $providerId === '') {
             $message->update(['status' => 'failed']);
 
-            return response()->json(['message' => 'WhatsApp rechazó el mensaje. Revisa la configuración o la ventana de respuesta.'], 502);
+            return response()->json(['message' => '360dialog rechazó el mensaje. Revisa la API key, el destinatario de prueba y el límite del sandbox.'], 502);
         }
 
         $message->update(['provider_message_id' => $providerId, 'status' => 'accepted']);

@@ -38,9 +38,8 @@ class WhatsappNumberController extends Controller
         return response()->json([
             'connected' => $connected,
             'available' => $available,
-            'configured' => (bool) (config('services.whatsapp.access_token')
-                && config('services.whatsapp.app_secret')
-                && config('services.whatsapp.verify_token')),
+            'configured' => (bool) (config('services.whatsapp.api_key')
+                && config('services.whatsapp.webhook_token')),
         ]);
     }
 
@@ -54,8 +53,7 @@ class WhatsappNumberController extends Controller
             return response()->json(['message' => 'Este número no está habilitado por la empresa.'], 422);
         }
 
-        if (! config('services.whatsapp.access_token') || ! config('services.whatsapp.app_secret')
-            || ! config('services.whatsapp.verify_token')) {
+        if (! config('services.whatsapp.api_key') || ! config('services.whatsapp.webhook_token')) {
             return response()->json(['message' => 'La conexión empresarial de WhatsApp aún no está configurada.'], 503);
         }
 

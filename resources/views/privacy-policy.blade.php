@@ -35,13 +35,13 @@
         <section>
             <h2 class="text-lg font-semibold text-white">3. Finalidad y permisos</h2>
             <p class="mt-2">Usamos estos datos para identificar la cuenta conectada, mantener su autorización y publicar el contenido que el asesor decide enviar. Para LinkedIn solicitamos <code class="text-[#f6ae72]">openid</code> y <code class="text-[#f6ae72]">profile</code> para identificar la cuenta, y <code class="text-[#f6ae72]">w_member_social</code> para publicar en nombre del asesor. Para TikTok solicitamos <code class="text-[#f6ae72]">user.info.basic</code> y <code class="text-[#f6ae72]">video.publish</code>.</p>
-            <p class="mt-2">Los botones para compartir en Facebook y WhatsApp abren opciones externas para enviar enlaces. La bandeja de WhatsApp es una función distinta: recibe mensajes mediante un webhook y envía las respuestas del asesor a través de la API empresarial de Meta.</p>
+            <p class="mt-2">Los botones para compartir en Facebook y WhatsApp abren opciones externas para enviar enlaces. La bandeja de WhatsApp es una función distinta: recibe mensajes mediante un webhook y envía las respuestas del asesor a través de 360dialog.</p>
         </section>
 
         <section>
             <h2 class="text-lg font-semibold text-white">4. Almacenamiento y protección</h2>
             <p class="mt-2">Los tokens de las redes sociales se almacenan cifrados en el servidor y asociados a la cuenta del asesor. Se utilizan desde el servidor para comunicarse con la API de la red correspondiente; no se muestran en el feed ni se envían al navegador como parte de los datos de la cuenta conectada. El acceso a las funciones de conexión y publicación requiere la autenticación del asesor.</p>
-            <p class="mt-2">La credencial de WhatsApp se configura en el servidor y no se entrega al navegador. El acceso a la bandeja y al envío de respuestas requiere la autenticación del asesor. Los mensajes enviados se transmiten a Meta para su entrega al cliente.</p>
+            <p class="mt-2">La credencial de WhatsApp se configura en el servidor y no se entrega al navegador. El acceso a la bandeja y al envío de respuestas requiere la autenticación del asesor. Los mensajes enviados se transmiten a 360dialog para su entrega al cliente.</p>
         </section>
 
         <section>

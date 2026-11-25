@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('phone_number_id');
             $table->string('business_phone')->nullable();
-            $table->string('customer_phone', 20);
+            $table->string('customer_phone', 255);
             $table->string('customer_name')->nullable();
             $table->unsignedBigInteger('assigned_adviser_id')->nullable();
             $table->timestamp('last_inbound_at')->nullable();

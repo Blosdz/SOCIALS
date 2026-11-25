@@ -23,7 +23,6 @@ Route::post('/webhooks/twilio/dial-status/{voiceCall}', [TwilioCallController::c
 Route::post('/webhooks/twilio/call-status/{voiceCall}', [TwilioCallController::class, 'callStatus']);
 Route::post('/webhooks/twilio/recording/{voiceCall}', [TwilioCallController::class, 'recording']);
 Route::post('/webhooks/twilio/transcription', [TwilioCallController::class, 'transcription']);
-Route::get('/webhooks/whatsapp', [WhatsappWebhookController::class, 'verify']);
 Route::post('/webhooks/whatsapp', [WhatsappWebhookController::class, 'receive']);
 Route::middleware(AuthenticateAdviser::class)->group(function () {
     Route::get('/whatsapp/numbers', [WhatsappNumberController::class, 'index']);
