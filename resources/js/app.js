@@ -1,6 +1,7 @@
 import { createApp, markRaw } from 'vue';
 import { Device } from '@twilio/voice-sdk';
 import './share-bar.js';
+import './whatsapp.js';
 
 async function voiceToken(adviserToken) {
     const response = await fetch('/api/twilio/token', {
@@ -486,6 +487,14 @@ if (integrationsRoot) {
                 disconnecting: '',
                 error: '',
                 notice: '',
+                waLoading: true,
+                waConfigured: false,
+                waConnected: [],
+                waAvailable: [],
+                waSelected: '',
+                waBusy: false,
+                waError: '',
+                waNotice: '',
                 calls: [],
                 callForm: { client_phone: '', recording_consent: false },
                 startingCall: false,
@@ -524,12 +533,80 @@ if (integrationsRoot) {
             if (params.has('connected')) this.notice = `${params.get('connected')} conectado correctamente.`;
             if (params.has('connection_error')) this.error = `No se pudo conectar ${params.get('connection_error')}. Revisa la configuración de la aplicación.`;
 
-            await Promise.all([this.loadAccounts(), this.loadCalls()]);
+            await Promise.all([this.loadAccounts(), this.loadCalls(), this.loadWhatsappNumbers()]);
         },
         methods: {
             signOut,
             token() {
                 return localStorage.getItem('adviser_token') ?? sessionStorage.getItem('adviser_token');
+            },
+            async loadWhatsappNumbers() {
+                this.waLoading = true;
+                try {
+                    const response = await fetch('/api/whatsapp/numbers', {
+                        headers: { Accept: 'application/json', Authorization: `Bearer ${this.token()}` },
+                    });
+                    if (response.status === 401) {
+                        window.location.replace('/login');
+                        return;
+                    }
+                    const payload = await response.json();
+                    if (!response.ok) throw new Error(payload.message || 'No se pudieron cargar los números de WhatsApp.');
+                    this.waConfigured = payload.configured;
+                    this.waConnected = payload.connected || [];
+                    this.waAvailable = payload.available || [];
+                    if (!this.waAvailable.some((item) => item.phone_number_id === this.waSelected)) this.waSelected = '';
+                    this.waError = '';
+                } catch (error) {
+                    this.waError = error.message || 'No se pudo consultar WhatsApp.';
+                } finally {
+                    this.waLoading = false;
+                }
+            },
+            async connectWhatsappNumber() {
+                if (!this.waSelected || this.waBusy) return;
+                this.waBusy = true;
+                this.waError = '';
+                this.waNotice = '';
+                try {
+                    const response = await fetch('/api/whatsapp/numbers', {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${this.token()}`,
+                        },
+                        body: JSON.stringify({ phone_number_id: this.waSelected }),
+                    });
+                    const payload = await response.json();
+                    if (!response.ok) throw new Error(payload.message || 'No se pudo conectar el número.');
+                    this.waNotice = payload.message;
+                    await this.loadWhatsappNumbers();
+                } catch (error) {
+                    this.waError = error.message || 'No se pudo conectar el número.';
+                } finally {
+                    this.waBusy = false;
+                }
+            },
+            async disconnectWhatsappNumber(phoneNumberId) {
+                if (this.waBusy) return;
+                this.waBusy = true;
+                this.waError = '';
+                this.waNotice = '';
+                try {
+                    const response = await fetch(`/api/whatsapp/numbers/${encodeURIComponent(phoneNumberId)}`, {
+                        method: 'DELETE',
+                        headers: { Accept: 'application/json', Authorization: `Bearer ${this.token()}` },
+                    });
+                    const payload = await response.json();
+                    if (!response.ok) throw new Error(payload.message || 'No se pudo desconectar el número.');
+                    this.waNotice = payload.message;
+                    await this.loadWhatsappNumbers();
+                } catch (error) {
+                    this.waError = error.message || 'No se pudo desconectar el número.';
+                } finally {
+                    this.waBusy = false;
+                }
             },
             async loadAccounts() {
                 this.loading = true;

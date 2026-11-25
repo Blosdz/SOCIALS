@@ -22,7 +22,7 @@
     <div class="space-y-8 py-8 text-sm leading-7 text-[#c3c6d0]">
         <section>
             <h2 class="text-lg font-semibold text-white">1. Uso de la plataforma</h2>
-            <p class="mt-2">SOCIALS es una plataforma de comunicación para asesores. Permite consultar contenidos de un feed, compartir enlaces, conectar cuentas de redes sociales y, cuando la integración está disponible, publicar contenido desde la cuenta que el asesor autorizó.</p>
+            <p class="mt-2">SOCIALS es una plataforma de comunicación para asesores. Permite consultar contenidos de un feed, compartir enlaces, conectar cuentas de redes sociales y, cuando las integraciones están disponibles, publicar contenido y responder conversaciones de WhatsApp desde los números empresariales.</p>
         </section>
 
         <section>
@@ -33,7 +33,7 @@
         <section>
             <h2 class="text-lg font-semibold text-white">3. Contenido y publicaciones</h2>
             <p class="mt-2">Antes de publicar, revisa el texto, las imágenes y el destino de la publicación. Al elegir publicar en LinkedIn o TikTok, autorizas a SOCIALS a enviar ese contenido a la red seleccionada mediante la cuenta que conectaste. Debes contar con permiso para usar los materiales que publiques y respetar las reglas de la red social correspondiente.</p>
-            <p class="mt-2">Facebook y WhatsApp abren opciones externas para compartir enlaces; la decisión de completar ese envío se realiza fuera de SOCIALS.</p>
+            <p class="mt-2">Los botones de Facebook y WhatsApp para compartir enlaces abren opciones externas; la decisión de completar ese envío se realiza fuera de SOCIALS. La bandeja de WhatsApp permite responder conversaciones directamente desde SOCIALS cuando la integración empresarial está configurada.</p>
         </section>
 
         <section>

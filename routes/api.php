@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\MarketingContentController;
 use App\Http\Controllers\Api\SocialAccountController;
 use App\Http\Controllers\Api\SocialPublishingController;
 use App\Http\Controllers\Api\TwilioCallController;
+use App\Http\Controllers\Api\WhatsappConversationController;
+use App\Http\Controllers\Api\WhatsappNumberController;
+use App\Http\Controllers\Api\WhatsappWebhookController;
 use App\Http\Middleware\AuthenticateAdviser;
 use Illuminate\Support\Facades\Route;
 
@@ -20,7 +23,15 @@ Route::post('/webhooks/twilio/dial-status/{voiceCall}', [TwilioCallController::c
 Route::post('/webhooks/twilio/call-status/{voiceCall}', [TwilioCallController::class, 'callStatus']);
 Route::post('/webhooks/twilio/recording/{voiceCall}', [TwilioCallController::class, 'recording']);
 Route::post('/webhooks/twilio/transcription', [TwilioCallController::class, 'transcription']);
+Route::get('/webhooks/whatsapp', [WhatsappWebhookController::class, 'verify']);
+Route::post('/webhooks/whatsapp', [WhatsappWebhookController::class, 'receive']);
 Route::middleware(AuthenticateAdviser::class)->group(function () {
+    Route::get('/whatsapp/numbers', [WhatsappNumberController::class, 'index']);
+    Route::post('/whatsapp/numbers', [WhatsappNumberController::class, 'store']);
+    Route::delete('/whatsapp/numbers/{phoneNumberId}', [WhatsappNumberController::class, 'destroy']);
+    Route::get('/whatsapp/conversations', [WhatsappConversationController::class, 'index']);
+    Route::get('/whatsapp/conversations/{conversation}', [WhatsappConversationController::class, 'show']);
+    Route::post('/whatsapp/conversations/{conversation}/messages', [WhatsappConversationController::class, 'send']);
     Route::get('/customers', [CustomerController::class, 'index']);
     Route::post('/customers', [CustomerController::class, 'store']);
     Route::get('/marketing-contents', [MarketingContentController::class, 'index']);

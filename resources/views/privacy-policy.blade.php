@@ -22,24 +22,26 @@
     <div class="space-y-8 py-8 text-sm leading-7 text-[#c3c6d0]">
         <section>
             <h2 class="text-lg font-semibold text-white">1. Alcance</h2>
-            <p class="mt-2">Esta política explica cómo SOCIALS trata los datos de los asesores que conectan LinkedIn o TikTok para publicar contenido desde la plataforma. También puedes utilizar SOCIALS sin conectar estas cuentas.</p>
+            <p class="mt-2">Esta política explica cómo SOCIALS trata los datos de los asesores que conectan LinkedIn o TikTok para publicar contenido y, cuando está habilitada, cómo gestiona conversaciones de WhatsApp desde los números empresariales.</p>
         </section>
 
         <section>
             <h2 class="text-lg font-semibold text-white">2. Datos que tratamos</h2>
             <p class="mt-2">Al registrar una cuenta de asesor guardamos su nombre y correo electrónico. Al conectar LinkedIn, recibimos el identificador de la cuenta, el nombre visible, los permisos concedidos y el token de acceso; si el proveedor lo entrega, también guardamos un token de renovación y sus fechas de vencimiento. SOCIALS no solicita el correo electrónico de tu perfil de LinkedIn.</p>
             <p class="mt-2">Al conectar TikTok tratamos los datos equivalentes que la cuenta autoriza. También conservamos registros locales de las publicaciones enviadas, como la red social, el estado, el identificador de la publicación y la fecha.</p>
+            <p class="mt-2">En la bandeja de WhatsApp guardamos el teléfono y nombre visible del cliente, el número empresarial, los mensajes recibidos y enviados, sus fechas y estados, y el asesor al que está asignado el número. Cada asesor solo puede ver las conversaciones de los números empresariales conectados a su cuenta.</p>
         </section>
 
         <section>
             <h2 class="text-lg font-semibold text-white">3. Finalidad y permisos</h2>
             <p class="mt-2">Usamos estos datos para identificar la cuenta conectada, mantener su autorización y publicar el contenido que el asesor decide enviar. Para LinkedIn solicitamos <code class="text-[#f6ae72]">openid</code> y <code class="text-[#f6ae72]">profile</code> para identificar la cuenta, y <code class="text-[#f6ae72]">w_member_social</code> para publicar en nombre del asesor. Para TikTok solicitamos <code class="text-[#f6ae72]">user.info.basic</code> y <code class="text-[#f6ae72]">video.publish</code>.</p>
-            <p class="mt-2">Los botones de Facebook y WhatsApp abren sus opciones para compartir enlaces. No conectan esas cuentas a SOCIALS ni nos entregan sus tokens.</p>
+            <p class="mt-2">Los botones para compartir en Facebook y WhatsApp abren opciones externas para enviar enlaces. La bandeja de WhatsApp es una función distinta: recibe mensajes mediante un webhook y envía las respuestas del asesor a través de la API empresarial de Meta.</p>
         </section>
 
         <section>
             <h2 class="text-lg font-semibold text-white">4. Almacenamiento y protección</h2>
             <p class="mt-2">Los tokens de las redes sociales se almacenan cifrados en el servidor y asociados a la cuenta del asesor. Se utilizan desde el servidor para comunicarse con la API de la red correspondiente; no se muestran en el feed ni se envían al navegador como parte de los datos de la cuenta conectada. El acceso a las funciones de conexión y publicación requiere la autenticación del asesor.</p>
+            <p class="mt-2">La credencial de WhatsApp se configura en el servidor y no se entrega al navegador. El acceso a la bandeja y al envío de respuestas requiere la autenticación del asesor. Los mensajes enviados se transmiten a Meta para su entrega al cliente.</p>
         </section>
 
         <section>

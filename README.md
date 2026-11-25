@@ -11,11 +11,13 @@
 
 ## Integraciones de FireflyOne
 
-Facebook e Instagram se usan únicamente como destinos para compartir enlaces desde cada publicación. No se solicita OAuth ni se publica por sus APIs.
+Facebook e Instagram se usan únicamente como destinos para compartir enlaces desde cada publicación. El botón para compartir en WhatsApp también abre una opción externa; la bandeja de WhatsApp es una integración empresarial independiente.
 
 LinkedIn permite conectar la cuenta del asesor y publicar una publicación con enlace. TikTok recibe el contenido compatible como borrador; el asesor debe finalizarlo desde TikTok hasta que la aplicación tenga aprobados los permisos de publicación directa y el dominio multimedia esté verificado.
 
 La página `/integrations` permite conectar LinkedIn/TikTok y solicitar llamadas de Twilio. Para habilitar los proveedores, configura las variables `LINKEDIN_*`, `TIKTOK_*` y `TWILIO_*` de `.env.example`; registra como redirect URIs `https://TU_HOST/oauth/linkedin/callback` y `https://TU_HOST/oauth/tiktok/callback` en sus consolas. TikTok requiere un callback HTTPS público.
+
+La página `/whatsapp` ofrece una bandeja de texto para cada asesor. En `/integrations`, el asesor conecta uno de los números empresariales habilitados por la empresa; un número solo puede estar asignado a un asesor a la vez. Sus conversaciones existentes y nuevas aparecen únicamente en su bandeja. Para probarla con Meta WhatsApp Cloud API, configura en `.env` `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_PHONE_NUMBER_IDS` (uno o varios identificadores separados por comas) y la versión de Graph API habilitada en `WHATSAPP_API_VERSION`. Ejecuta las migraciones pendientes y registra en Meta el webhook HTTPS `https://TU_HOST/api/webhooks/whatsapp`, suscrito al campo `messages`. El token de verificación registrado en Meta debe coincidir con `WHATSAPP_VERIFY_TOKEN`. El navegador nunca recibe la credencial de Meta. La bandeja permite texto libre solo durante las 24 horas posteriores al último mensaje del cliente; los mensajes fuera de esa ventana requieren plantillas aprobadas, que esta demostración aún no envía.
 
 Para transcribir llamadas, configura en Twilio una Transcription Configuration con el callback `https://TU_HOST/api/webhooks/twilio/transcription` (POST), y establece su ID en `TWILIO_TRANSCRIPTION_CONFIGURATION_ID`. `TWILIO_WEBHOOK_BASE_URL` debe ser `https://TU_HOST`. La llamada solicita consentimiento antes de grabar. Para conservar transcripciones grandes aunque falle el webhook, configura también un Conversation Configuration en Twilio.
 

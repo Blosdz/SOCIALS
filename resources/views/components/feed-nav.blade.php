@@ -12,6 +12,9 @@
         <a href="{{ route('contacts', [], false) }}" @if ($active === 'contacts') aria-current="page" @endif aria-label="Contactos" class="flex h-9 w-9 items-center justify-center rounded-lg transition-colors {{ $active === 'contacts' ? 'bg-[#1e1c18] text-[#f58220]' : 'text-[#959aa7] hover:bg-[#15161b] hover:text-white' }}">
             <span class="material-symbols-outlined text-xl">contacts</span>
         </a>
+        <a href="{{ route('whatsapp', [], false) }}" @if ($active === 'whatsapp') aria-current="page" @endif aria-label="WhatsApp" class="flex h-9 w-9 items-center justify-center rounded-lg transition-colors {{ $active === 'whatsapp' ? 'bg-[#1e1c18] text-[#f58220]' : 'text-[#959aa7] hover:bg-[#15161b] hover:text-white' }}">
+            <span class="material-symbols-outlined text-xl">chat</span>
+        </a>
         <a href="{{ route('integrations', [], false) }}" @if ($active === 'integrations') aria-current="page" @endif aria-label="Configuración" class="flex h-9 w-9 items-center justify-center rounded-lg transition-colors {{ $active === 'integrations' ? 'bg-[#1e1c18] text-[#f58220]' : 'text-[#959aa7] hover:bg-[#15161b] hover:text-white' }}">
             <span class="material-symbols-outlined text-xl">settings</span>
         </a>
@@ -33,6 +36,9 @@
         </a>
         <a href="{{ route('contacts', [], false) }}" @if ($active === 'contacts') aria-current="page" @endif class="flex items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-xs transition-colors {{ $active === 'contacts' ? 'border-[#f58220] bg-[#1e1c18] font-medium text-[#f58220]' : 'border-transparent text-[#959aa7] hover:bg-[#15161b] hover:text-white' }}">
             <span class="material-symbols-outlined text-base">contacts</span><span>Contactos</span>
+        </a>
+        <a href="{{ route('whatsapp', [], false) }}" @if ($active === 'whatsapp') aria-current="page" @endif class="flex items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-xs transition-colors {{ $active === 'whatsapp' ? 'border-[#f58220] bg-[#1e1c18] font-medium text-[#f58220]' : 'border-transparent text-[#959aa7] hover:bg-[#15161b] hover:text-white' }}">
+            <span class="material-symbols-outlined text-base">chat</span><span>WhatsApp</span>
         </a>
         <a href="{{ route('integrations', [], false) }}" @if ($active === 'integrations') aria-current="page" @endif class="flex items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-xs transition-colors {{ $active === 'integrations' ? 'border-[#f58220] bg-[#1e1c18] font-medium text-[#f58220]' : 'border-transparent text-[#959aa7] hover:bg-[#15161b] hover:text-white' }}">
             <span class="material-symbols-outlined text-base text-[#757a87]">settings</span><span>Configuración</span>

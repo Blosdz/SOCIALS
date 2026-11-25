@@ -16,7 +16,7 @@
     <header class="mb-8 flex items-center justify-between border-b border-[#20222a] pb-5">
         <div>
             <h1 class="text-2xl font-semibold text-[#f0f2f5]">Conexiones e integraciones</h1>
-            <p class="mt-1 text-sm text-[#7a7e8b]">Conecta tus cuentas para preparar la publicación de contenidos.</p>
+            <p class="mt-1 text-sm text-[#7a7e8b]">Gestiona tus conexiones sociales y el número empresarial de tu bandeja.</p>
         </div>
     </header>
 
@@ -58,6 +58,44 @@
                     </button>
                 </div>
             </article>
+        </div>
+    </section>
+
+    <section class="mt-8" aria-labelledby="whatsapp-title">
+        <div class="rounded-xl border border-[#25272e] bg-[#141519] p-5">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1e2026] text-[#f58220]"><span class="material-symbols-outlined">chat</span></div>
+                <div>
+                    <h2 id="whatsapp-title" class="text-sm font-semibold text-[#f0f2f5]">WhatsApp Business</h2>
+                    <p class="mt-0.5 text-[11px] text-[#777c89]">Número oficial asignado a tu bandeja</p>
+                </div>
+            </div>
+            <p class="mt-4 text-xs leading-relaxed text-[#8d919d]">Elige un número habilitado por la empresa. Sus conversaciones y respuestas aparecerán únicamente en tu bandeja.</p>
+
+            <p v-if="waLoading" class="mt-4 text-xs text-[#8d919d]">Cargando números…</p>
+            <p v-else-if="!waConfigured" class="mt-4 text-xs text-amber-300">La empresa aún debe completar la conexión con WhatsApp Business.</p>
+            <p v-if="waError" class="mt-4 rounded-lg border border-red-900/70 bg-red-950/40 px-3 py-2 text-xs text-red-300" role="alert">@{{ waError }}</p>
+            <p v-if="waNotice" class="mt-4 rounded-lg border border-emerald-900/70 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-300" role="status">@{{ waNotice }}</p>
+
+            <div v-if="waConnected.length" class="mt-5 space-y-2">
+                <h3 class="text-xs font-semibold text-[#e2e4e9]">Tus números</h3>
+                <div v-for="number in waConnected" :key="number.phone_number_id" class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#25272e] bg-[#101114] px-3 py-3">
+                    <span class="text-xs text-[#c3c6d0]">@{{ number.display_phone || number.phone_number_id }}</span>
+                    <button @click="disconnectWhatsappNumber(number.phone_number_id)" :disabled="waBusy" class="rounded-lg border border-[#353741] px-3 py-2 text-xs text-[#c3c6d0] hover:border-red-900 hover:text-red-300 disabled:opacity-50" type="button">Desconectar</button>
+                </div>
+                <a href="{{ route('whatsapp', [], false) }}" class="inline-block text-xs font-medium text-[#f58220] hover:underline">Abrir bandeja de WhatsApp</a>
+            </div>
+
+            <form v-if="waConfigured && waAvailable.length" @submit.prevent="connectWhatsappNumber" class="mt-5 flex flex-wrap items-end gap-3">
+                <label class="min-w-56 flex-1 text-xs font-medium text-[#c3c6d0]">Número disponible
+                    <select v-model="waSelected" class="mt-1.5 w-full rounded-lg border border-[#30323c] bg-[#0f1013] px-3 py-2.5 text-sm text-white focus:border-[#f58220] focus:outline-none" required>
+                        <option value="" disabled>Selecciona un número</option>
+                        <option v-for="number in waAvailable" :key="number.phone_number_id" :value="number.phone_number_id">@{{ number.display_phone || number.phone_number_id }}</option>
+                    </select>
+                </label>
+                <button :disabled="waBusy || !waSelected" class="rounded-lg bg-[#f58220] px-4 py-2.5 text-xs font-semibold text-black disabled:opacity-50" type="submit">Conectar a mi bandeja</button>
+            </form>
+            <p v-else-if="waConfigured && !waLoading && !waConnected.length" class="mt-4 text-xs text-[#8d919d]">No hay números oficiales disponibles para conectar.</p>
         </div>
     </section>
 

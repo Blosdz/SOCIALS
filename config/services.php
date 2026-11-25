@@ -63,4 +63,12 @@ return [
         'webhook_base_url' => env('TWILIO_WEBHOOK_BASE_URL'),
     ],
 
+    'whatsapp' => [
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'app_secret' => env('WHATSAPP_APP_SECRET'),
+        'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+        'phone_number_ids' => env('WHATSAPP_PHONE_NUMBER_IDS', ''),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v27.0'),
+    ],
+
 ];
